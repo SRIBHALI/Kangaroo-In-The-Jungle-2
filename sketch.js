@@ -3,10 +3,9 @@ var PLAY = 1;
 var END = 0;
 var WIN = 2;
 var gameState = PLAY;
-var shrub;
 
-var kangaroo, kangaroo_running , kangaroo_collided;
-var jungle, invisiblejungle,invisibleGround;
+var kangaroo, kangaroo_running, kangaroo_collided;
+var jungle, invisiblejungle;
 
 var obstaclesGroup, obstacle1;
 
@@ -37,21 +36,25 @@ function setup() {
   jungle.x = width /2;
 
   kangaroo = createSprite(50,200,20,50);
-  kangaroo.addAnimation("running",kangaroo_running);
-  kangaroo.addAnimation("collided",kangaroo_collided);
- 
-  kangaroo.scale = 0.1;
+  kangaroo.addAnimation("running", kangaroo_running);
+  kangaroo.addAnimation("collided", kangaroo_collided);
+  kangaroo.scale = 0.15;
   kangaroo.setCollider("circle",0,0,300)
-
+  kangaroo.debug=true;
+    
   invisibleGround = createSprite(400,350,1600,10);
   invisibleGround.visible = false;
-
-  /*Create a sprite for the kangaroo:
-Apply Kangaroo_running and kangaroo_collided animation to it. Scale the kangaroo if required.
-Set the collider of the kangaroo as a circle and the radius of the collider as 300
-*/
-//Create a sprite for Invisible ground and place it at the bottom side of the screen.
   
+   gameOver = createSprite(400,100)
+   gameOver.addImage(gameOverImg)
+   gameOver.scale = 0.5;
+   gameOver.visible =  false;
+
+   restart =  createSprite(400,140)
+   restart.addImage(restartImg)
+   restart.scale = 0.1;
+   restart.visible = false;
+
   shrubsGroup = new Group();
   obstaclesGroup = new Group();
   
@@ -62,8 +65,8 @@ Set the collider of the kangaroo as a circle and the radius of the collider as 3
 function draw() {
   background(255);
   
-//In function draw(), Set the x-Position of the kangaroo according to the camera   
-kangaroo.x = camera.position.x-270; 
+  kangaroo.x=camera.position.x-270;
+   
   if (gameState===PLAY){
 
     jungle.velocityX=-3
@@ -89,7 +92,7 @@ kangaroo.x = camera.position.x-270;
       gameState = END;
     }
     if(shrubsGroup.isTouching(kangaroo)){
-        score = score+1
+      score = score+1;
       shrubsGroup.destroyEach();
     }
   }
@@ -99,7 +102,8 @@ kangaroo.x = camera.position.x-270;
     jungle.velocityX = 0;
     obstaclesGroup.setVelocityXEach(0);
     shrubsGroup.setVelocityXEach(0);
-
+    gameOver.visible = true;
+    restart.visible = true;
     //change the kangaroo animation
     kangaroo.changeAnimation("collided",kangaroo_collided);
     
@@ -109,11 +113,37 @@ kangaroo.x = camera.position.x-270;
     
   }
 
-  
+  else if(gameState === WIN){
+    jungle.velocityX = 0;
+    kangaroo.velocityY = 0;
+    obstaclesGroup.setVelocityXEach(0)
+    shrubsGroup.setVelocityXEach(0)
+
+    kangaroo.changeAnimation("collided",kangaroo_collided);
+
+  obstaclesGroup.setLifetimeEach(-1)
+  shrubsGroup.setLifetimeEach(-1)  
+  }
+
+  if(mousePressedOver(restart)) {
+    reset();
+  }
+
   drawSprites();
-  textSize(20);
-  fill ("black");
-  text("Score:"+score,200,30)
+  textSize(25);
+  fill("black");
+ text ("Score:" + score, camera.position.x,20)
+
+ if(score >= 5){
+   kangaroo.visible = false;
+   textSize(30);
+   stroke(3);
+   fill("black");
+   text("Congragulations! You won the game!!",70,200);
+   gameState = WIN; 
+ }
+
+
 
 }
 
@@ -121,9 +151,9 @@ function spawnShrubs() {
   //write code here to spawn the clouds
   if (frameCount % 150 === 0) {
 
-//Set the x-position of the shrub according to the game camera.
+    var shrub = createSprite(camera.position.x+500,330,40,10);
 
- var shrub = createSprite(camera.position.x+500,330,40,10)
+    shrub.debug=true;
     shrub.velocityX = -(6 + 3*score/100)
     shrub.scale = 0.6;
 
@@ -160,10 +190,20 @@ function spawnObstacles() {
     obstacle.velocityX = -(6 + 3*score/100)
     obstacle.scale = 0.15;
     //assign scale and lifetime to the obstacle           
- 
+    obstacle.debug=true    
     obstacle.lifetime = 400;
     //add each obstacle to the group
     obstaclesGroup.add(obstacle);
     
   }
+}
+
+ function reset(){
+  gameState = PLAY;
+  gameOver.visible = false;
+  restart.visible = false;
+  obstaclesGroup.destroyEach();
+  shrubsGroup.destroyEach();
+  kangaroo.changeAnimation("running" , kangaroo_running);
+  score = 0;
 }
